@@ -63,14 +63,18 @@ def _e(e):
     raise Exception(f'error: {e}')
 
 
-def _p(s):
-    print(s)
+def _p(s, t=0):
+    print(('\t' * t) + s)
+
+
+def _pt(s):
+    return _p(s, t=1)
 
 
 def scan_for_loggers(info, t_ms=TIMEOUT_SCAN_MS):
     assert len(info) == 3
-    t_s = int(t_ms) / 1000
-    print(f'scan for {info} loggers during {t_s} seconds')
+    t_s = int(t_ms / 1000)
+    _p(f'scanning for {info} loggers during {t_s} seconds, please wait...')
     ad.scan_for(t_ms)
     ls_pp = ad.scan_get_results()
     ls_pp = [p for p in ls_pp if p.identifier() == info]
@@ -99,28 +103,28 @@ def _deploy_one_tdo_logger(p):
     ver = cmd_gfv(p)
     _e('command version')
     ver = ver[6:].decode()
-    _p(f'version {ver}')
+    _pt(f'version {ver}')
 
     g = ("-3.333333", "-4.444444", None, None)
     cmd_sws(p, g)
     _e('command stop with string')
-    _p('stop OK')
+    _pt('stop OK')
 
     v = cmd_sts(p)
     _e('command status')
-    _p(f'status {v}')
+    _pt(f'status {v}')
 
     v = cmd_gtm(p)
     _e('command get_time')
-    _p(f'get time {v}')
+    _pt(f'get time {v}')
 
     cmd_stm(p)
     _e('command set time')
-    _p(f'set time OK')
+    _pt(f'set time OK')
 
     cmd_frm(p)
     _e('command format')
-    _p('format OK')
+    _pt('format OK')
 
     cmd_wli(p, sn)
     _e('command wli_sn')
@@ -135,7 +139,7 @@ def _deploy_one_tdo_logger(p):
     v = cmd_bat(p)
     _e('command bat')
     v /= BAT_FACTOR_TDO
-    _p(f'bat = {v} mV')
+    _pt(f'bat = {int(v)} mV')
 
     if ver >= "4.0.06":
         d = prf_d[prf_i][1]
@@ -143,7 +147,7 @@ def _deploy_one_tdo_logger(p):
         for tag, v in d.items():
             if tag == 'RVN':
                 continue
-            _p(f'scf {tag} {v}')
+            _pt(f'scf {tag} {v}')
             cmd_scf(p, tag, v)
             _e(f'command scf {tag} {v}')
             time.sleep(.1)
@@ -155,10 +159,10 @@ def _deploy_one_tdo_logger(p):
     if g_cfg['rerun']:
         if not cmd_rws(p, g):
             _e('command run with string')
-        _p('run OK')
+        _pt('run with string OK')
 
     my_disconnect(p)
-    _p('disconnected')
+    _pt('disconnected')
 
 
 def deploy_all_tdo_loggers():
@@ -205,8 +209,8 @@ def menu():
         global prf_i
         m = {
             's': f'scan again',
-            'p': f'set profile, now is {prf_d[prf_i][0]}',
-            'r': f'set rerun,   now is {g_cfg["rerun"]}',
+            'p': f'set profiler, now is {prf_d[prf_i][0]}',
+            'r': f'set run flag, now is {g_cfg["rerun"]}',
             'e': f'edit file {bn}',
             'q': 'quit'
         }
@@ -222,7 +226,7 @@ def menu():
                 m[str(i)] = per.address()
 
         # grab user choice
-        c = input()
+        c = input('-> ')
         if c not in m.keys():
             continue
         if c == 'q':
