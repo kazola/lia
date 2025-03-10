@@ -1,2 +1,2 @@
 cd _pyinstaller
-pyinstaller -n main_tdo --onefile ..\main_tdo.py
+pyinstaller --icon=favicon.ico -n deploy_tdo --onefile ..\main_tdo.py

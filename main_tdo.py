@@ -211,7 +211,7 @@ def menu():
             's': f'scan again',
             'p': f'set profiler, now is {prf_d[prf_i][0]}',
             'r': f'set run flag, now is {g_cfg["rerun"]}',
-            'e': f'edit file {bn}',
+            'e': f'edit file {bn}, now it has {len(dlf)} loggers',
             'q': 'quit'
         }
 
