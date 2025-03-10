@@ -1,3 +1,5 @@
+import os.path
+import pathlib
 import time
 from lsb.cmd import (
     get_rx,
@@ -24,6 +26,8 @@ from lsb.li import (
     UUID_S,
     UUID_T
 )
+import toml
+import subprocess as sp
 from common import clear_screen, PLATFORM
 from scf import prf_d
 
@@ -31,7 +35,26 @@ from scf import prf_d
 prf_i = 0
 BAT_FACTOR_TDO = 0.5454
 TIMEOUT_SCAN_MS = 10000
+FILE_LOGGERS_TOML = (pathlib.Path.home() /
+                  'Downloads' / 'win_bil' / 'loggers.toml')
+FOL_WIN_BIL = os.path.dirname(FILE_LOGGERS_TOML)
 ad = get_adapters()[0]
+g_cfg = {
+    'rerun': False,
+}
+
+
+def _create_file_and_folder():
+    if not os.path.exists(FOL_WIN_BIL):
+        if PLATFORM == 'Windows':
+            os.system(f'mkdir {FOL_WIN_BIL}')
+    if not os.path.exists(FILE_LOGGERS_TOML):
+        with open(FILE_LOGGERS_TOML, 'w') as f:
+            f.write('[loggers]\n')
+            f.write("# syntax\n")
+            f.write('# "1234567" = "11:22:33:44:55:66"\n')
+
+
 
 
 def _e(e):
@@ -57,7 +80,11 @@ def scan_for_loggers(info, t=TIMEOUT_SCAN_MS):
 def _deploy_one_tdo_logger(p):
 
     mac = p.address()
-    sn = 1234567
+    sn = '2400001'
+
+    if not sn.startswith('2') or sn.startswith('3'):
+        _p(f'error: {mac} has bad SN {sn}')
+        input()
 
     # todo ---> obtain SN from database
 
@@ -111,7 +138,10 @@ def _deploy_one_tdo_logger(p):
 
     if ver >= "4.0.06":
         d = prf_d[prf_i][1]
+        # send SCC tags
         for tag, v in d.items():
+            if tag == 'RVN':
+                continue
             _p(f'scf {tag} {v}')
             cmd_scf(p, tag, v)
             _e(f'command scf {tag} {v}')
@@ -121,10 +151,10 @@ def _deploy_one_tdo_logger(p):
         _e(f'command scc dhu')
         time.sleep(.1)
 
-
-    # if not cmd_rws(p, g):
-    #     _e('command run with string')
-    # _p('run OK')
+    if g_cfg['rerun']:
+        if not cmd_rws(p, g):
+            _e('command run with string')
+        _p('run OK')
 
     my_disconnect(p)
     _p('disconnected')
@@ -147,28 +177,47 @@ def deploy_all_tdo_loggers():
 
 
 def menu():
-    global prf_i
-    m = {
-        's': 'scan again',
-        'p': f'set profiling, currently {prf_d[prf_i][0]}',
-        'q': 'quit'
-    }
-    clear_screen()
-    _p('doing first scan...')
-    ls = scan_for_loggers('TDO')
+    _create_file_and_folder()
+    ls = []
+    c = ''
 
-    # forever
     while 1:
-        # display menu
+
         clear_screen()
+
+        # we not always do a scan
+        skip_scan = c in ('p', 'r', 'e')
+        if not skip_scan:
+            ls = scan_for_loggers('TDO')
+
+        # read loggers file
+        dlf = {}
+        if os.path.exists(FILE_LOGGERS_TOML):
+            dlf = toml.load(FILE_LOGGERS_TOML)['loggers']
+
+        # filter by our mac file list
+        lsf = [i.lower() for i in dlf.keys()]
+        ls = [i for i in ls if i.address().lower() in lsf]
+
+        # build menu
+        bn = os.path.basename(FILE_LOGGERS_TOML)
+        global prf_i
+        m = {
+            's': f'scan again',
+            'p': f'set profile, now is {prf_d[prf_i][0]}',
+            'r': f'set rerun,   now is {g_cfg["rerun"]}',
+            'e': f'edit file {bn}',
+            'q': 'quit'
+        }
+
+        # display menu
         _p('Select an option:')
         for k, v in m.items():
             if not k.isnumeric():
                 _p(f'\t{k}) {v}')
         if ls:
-            print('\nvisible loggers:')
             for i, per in enumerate(ls):
-                _p(f'\t{i}) {per.address()}')
+                _p(f'\t{i}) deploy {per.address()}')
                 m[str(i)] = per.address()
 
         # grab user choice
@@ -177,10 +226,19 @@ def menu():
             continue
         if c == 'q':
             break
-        if c == 's':
-            ls = scan_for_loggers('TDO')
         if c == 'p':
             prf_i = (prf_i + 1) % len(prf_d)
+            continue
+        if c == 'r':
+            g_cfg['rerun'] = not g_cfg['rerun']
+            continue
+        if c == 's':
+            # just go at it again
+            continue
+        if c == 'e':
+            _create_file_and_folder()
+            sp.run(f'notepad {FILE_LOGGERS_TOML}',
+                   shell=True, stdout=sp.PIPE, stderr=sp.PIPE)
             continue
         if not c.isnumeric():
             continue
@@ -189,9 +247,9 @@ def menu():
         my_p = ls[int(c)]
         try:
             _deploy_one_tdo_logger(my_p)
-            _p('went OK!')
+            _p('\nwent OK!')
         except (Exception,) as ex:
-            _p(f'error: {ex}')
+            _p(f'\nerror: {ex}')
             my_disconnect(my_p)
         _p('\npress ENTER to go back to menu')
         input()

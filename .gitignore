@@ -13,6 +13,7 @@
 __pycache__/
 wli/__pycache__/
 .venv/
+_pyinstaller
 
 
 # Distribution / packaging

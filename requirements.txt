@@ -2,3 +2,4 @@ lsb@git+https://github.com/LowellInstruments/lsb.git
 simplepyble~=0.9.0
 setproctitle
 pyinstaller
+toml
