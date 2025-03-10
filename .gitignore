@@ -11,9 +11,8 @@
 
 
 __pycache__/
-wli/__pycache__/
 .venv/
-_pyinstaller
+_pyinstaller/
 
 
 # Distribution / packaging

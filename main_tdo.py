@@ -36,7 +36,7 @@ prf_i = 0
 BAT_FACTOR_TDO = 0.5454
 TIMEOUT_SCAN_MS = 10000
 FILE_LOGGERS_TOML = (pathlib.Path.home() /
-                  'Downloads' / 'win_bil' / 'loggers.toml')
+                  'Downloads' / 'liw' / 'loggers.toml')
 FOL_WIN_BIL = os.path.dirname(FILE_LOGGERS_TOML)
 ad = get_adapters()[0]
 g_cfg = {
@@ -53,8 +53,6 @@ def _create_file_and_folder():
             f.write('[loggers]\n')
             f.write("# syntax\n")
             f.write('# "1234567" = "11:22:33:44:55:66"\n')
-
-
 
 
 def _e(e):
@@ -207,6 +205,8 @@ def menu():
         # build menu
         bn = os.path.basename(FILE_LOGGERS_TOML)
         global prf_i
+        if len(dlf) == 0:
+            _p(f'warning: you have 0 files on your file {bn}')
         m = {
             's': f'scan again',
             'p': f'set profiler, now is {prf_d[prf_i][0]}',
