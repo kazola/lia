@@ -67,10 +67,11 @@ def _p(s):
     print(s)
 
 
-def scan_for_loggers(info, t=TIMEOUT_SCAN_MS):
+def scan_for_loggers(info, t_ms=TIMEOUT_SCAN_MS):
     assert len(info) == 3
-    print(f'scan for {info} loggers during {t} ms')
-    ad.scan_for(t)
+    t_s = int(t_ms) / 1000
+    print(f'scan for {info} loggers during {t_s} seconds')
+    ad.scan_for(t_ms)
     ls_pp = ad.scan_get_results()
     ls_pp = [p for p in ls_pp if p.identifier() == info]
     return ls_pp
@@ -88,7 +89,7 @@ def _deploy_one_tdo_logger(p):
 
     # todo ---> obtain SN from database
 
-    _p(f'trying to deploy logger {sn} mac {mac}')
+    _p(f'\ndeploying TDO logger {sn} mac {mac}')
 
     if not connect_mac(p, mac):
         _e('connecting')
