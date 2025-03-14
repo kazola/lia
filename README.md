@@ -4,7 +4,7 @@ Logger Instruments on Windows
 
 ## Description
 
-Tools such as ``deploy_tdo.exe`` now can run on MSWindows.
+Tools such as ``main_tdo`` now can run on MSWindows and MacOS.
 
 ## License
 
