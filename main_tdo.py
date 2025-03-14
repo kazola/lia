@@ -1,4 +1,5 @@
 import os.path
+import sys
 import time
 from lsb.cmd import (
     get_rx,
@@ -32,7 +33,7 @@ from liw.common import (
     FILE_LOGGERS_TOML,
     open_text_editor,
     scan_for_tdo_loggers,
-    get_sn_in_file_from_mac
+    get_sn_in_file_from_mac, get_remote_loggers_file
 )
 from liw.scf import prf_d
 
@@ -228,6 +229,9 @@ def menu():
 
 
 if __name__ == '__main__':
+    if len(sys.argv) == 2:
+        # online mode
+        get_remote_loggers_file()
     menu()
     _p('quitting main_TDO')
     time.sleep(1)
