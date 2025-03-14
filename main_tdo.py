@@ -28,11 +28,11 @@ from lsb.li import (
 import toml
 from liw.common import (
     clear_screen,
-    PLATFORM,
     create_app_data_folder_and_file,
     FILE_LOGGERS_TOML,
     open_text_editor,
-    scan_for_tdo_loggers, get_sn_in_file_from_mac
+    scan_for_tdo_loggers,
+    get_sn_in_file_from_mac
 )
 from liw.scf import prf_d
 
@@ -58,16 +58,13 @@ def _pt(s):
     return _p(s, t=1)
 
 
-def _deploy_one_tdo_logger(p):
+def _deploy_one_tdo_logger(p, sn):
 
     mac = p.address()
-    sn = '2400001'
 
     if not sn.startswith('2') or sn.startswith('3'):
         _p(f'error: {mac} has bad SN {sn}')
         input()
-
-    # todo ---> obtain SN from database
 
     _p(f'\ndeploying TDO logger {sn} mac {mac}')
 
@@ -141,25 +138,9 @@ def _deploy_one_tdo_logger(p):
     _pt('disconnected')
 
 
-def deploy_all_tdo_loggers():
-    info = 'TDO'
-    print('\n\n')
-    print(f'Deploying {info} loggers under {PLATFORM}')
-    ls = scan_for_tdo_loggers()
-    if not ls:
-        print(f'did not find any {info} logger')
-        return
-    for p in ls:
-        try:
-            _deploy_one_tdo_logger(p)
-        except (Exception, ) as ex:
-            print(ex)
-            my_disconnect(p)
-
-
 def menu():
     create_app_data_folder_and_file()
-    ls = []
+    ls_pp = []
     c = ''
 
     while 1:
@@ -169,16 +150,12 @@ def menu():
         # we not always do a scan
         skip_scan = c in ('p', 'r', 'e')
         if not skip_scan:
-            ls = scan_for_tdo_loggers()
+            ls_pp = scan_for_tdo_loggers()
 
         # read loggers file
         dlf = {}
         if os.path.exists(FILE_LOGGERS_TOML):
             dlf = toml.load(FILE_LOGGERS_TOML)['loggers']
-
-        # filter by our mac file list
-        lsf = [i.lower() for i in dlf.keys()]
-        ls = [i for i in ls if i.address().lower() in lsf]
 
         # build menu
         bn = os.path.basename(FILE_LOGGERS_TOML)
@@ -194,24 +171,24 @@ def menu():
         }
 
         # display menu
-        _p('Select an option:')
+        _p('\nSelect an option...')
         for k, v in m.items():
             if not k.isnumeric():
                 _p(f'\t{k}) {v}')
 
         # display list of deployable TDO loggers
-        if ls:
-            for i, per in enumerate(ls):
+        ls_file_macs = [m.lower() for m in dlf.values()]
+        ls_pp = [p for p in ls_pp if p.address().lower() in ls_file_macs ]
+        if ls_pp:
+            _p('\n... or deploy one of the TDO loggers detected nearby:')
+            for i, per in enumerate(ls_pp):
                 sn = get_sn_in_file_from_mac(dlf, per.address())
-                if sn:
-                    _p(f'\t{i}) deploy {sn}')
-                else:
-                    _p(f'\t{i}) deploy {per.address()}')
+                _p(f'\t{i}) deploy {sn}')
                 # add to menu dictionary
                 m[str(i)] = per.address()
 
         # grab user choice
-        c = input('-> ')
+        c = input('\n-> ')
         if c not in m.keys():
             continue
         if c == 'q':
@@ -233,13 +210,19 @@ def menu():
             continue
 
         # deploy logger
-        my_p = ls[int(c)]
+        my_p = ls_pp[int(c)]
         try:
-            _deploy_one_tdo_logger(my_p)
-            _p('\nwent OK!')
+            sn = get_sn_in_file_from_mac(dlf, my_p.address())
+            _deploy_one_tdo_logger(my_p, sn)
+            _p(f'\ndeployment of TDO logger {sn} went OK!')
         except (Exception,) as ex:
             _p(f'\nerror: {ex}')
+
+        try:
             my_disconnect(my_p)
+        except (Exception,) as ex:
+            _p(f'\nerror disconnecting: {ex}')
+
         _p('\npress ENTER to go back to menu')
         input()
 

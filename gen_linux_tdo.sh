@@ -1,4 +1,22 @@
 #!/usr/bin/env bash
 
- pyinstaller --onefile main_tdo --distpath _pyinstaller/dist --workpath _pyinstaller/build
-pyinstaller --onefile main_tst.py  --distpath _pyinstaller/dist --workpath _pyinstaller/build --add-data="data_files/my_file.txt:data_files"
+
+clear
+
+pyinstaller --onefile main_tdo.py  \
+    --add-data="data_files/$1:data_files" \
+    --distpath _pyinstaller/dist \
+    --workpath _pyinstaller/build \
+    --icon=data_files/li.ico
+
+
+rv=$?
+if [ $rv -eq 0 ]; then
+    echo
+    echo 'copying executable as main_tdo_linux...'
+    cp _pyinstaller/dist/main_tdo gen/main_tdo_linux
+    echo 'done'
+fi
+
+mv ./*.spec _pyinstaller
+

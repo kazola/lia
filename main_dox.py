@@ -1,4 +1,5 @@
 import os.path
+import sys
 import time
 from lsb.cmd import (
     get_rx,
@@ -9,15 +10,15 @@ from lsb.cmd import (
     cmd_stm,
     cmd_frm,
     cmd_wli,
-    cmd_fds,
     cmd_bat,
-    cmd_dns,
     cb_rx_noti,
-    cmd_rws, cmd_gdo, cmd_cfg,
+    cmd_rws,
+    cmd_gdo,
+    cmd_cfg
 )
 from lsb.connect import (
     connect_mac,
-    my_disconnect,
+    my_disconnect
 )
 from lsb.li import (
     UUID_S,
@@ -26,11 +27,12 @@ from lsb.li import (
 import toml
 from liw.common import (
     clear_screen,
-    PLATFORM,
     create_app_data_folder_and_file,
     FILE_LOGGERS_TOML,
     open_text_editor,
-    scan_for_dox_loggers, get_sn_in_file_from_mac
+    scan_for_dox_loggers,
+    get_sn_in_file_from_mac,
+    get_remote_loggers_file
 )
 
 
@@ -56,16 +58,13 @@ def _pt(s):
     return _p(s, t=1)
 
 
-def _deploy_one_dox_logger(p):
+def _deploy_one_dox_logger(p, sn):
 
     mac = p.address()
-    sn = '2400001'
 
     if not sn.startswith('2') or sn.startswith('3'):
         _p(f'error: {mac} has bad SN {sn}')
         input()
-
-    # todo ---> obtain SN from database
 
     _p(f'\ndeploying DOX logger {sn} mac {mac}')
 
@@ -104,17 +103,14 @@ def _deploy_one_dox_logger(p):
     _e('command wli_sn')
     time.sleep(.1)
 
-    # these 2 are not present everywhere
-    cmd_dns(p, 'LAB')
-    cmd_fds(p)
-
     v = cmd_bat(p)
     _e('command bat')
     v /= BAT_FACTOR_DOX
     _pt(f'bat = {int(v)} mV')
 
-    cmd_gdo(p)
+    rv = cmd_gdo(p)
     _e('command GDO')
+    _pt(f'gdo = {rv}')
 
     # send CFG command
     d_cfg = {
@@ -134,30 +130,17 @@ def _deploy_one_dox_logger(p):
         "LED": 1
     }
     cmd_cfg(p, d_cfg)
+    _e('command CFG')
+    _pt('configuration CFG sent OK')
+
 
     my_disconnect(p)
     _pt('disconnected')
 
 
-def deploy_all_dox_loggers():
-    info = 'DOX'
-    print('\n\n')
-    print(f'Deploying {info} loggers under {PLATFORM}')
-    ls = scan_for_dox_loggers()
-    if not ls:
-        print(f'did not find any {info} logger')
-        return
-    for p in ls:
-        try:
-            _deploy_one_dox_logger(p)
-        except (Exception, ) as ex:
-            print(ex)
-            my_disconnect(p)
-
-
 def menu():
     create_app_data_folder_and_file()
-    ls = []
+    ls_pp = []
     c = ''
 
     while 1:
@@ -167,16 +150,12 @@ def menu():
         # we not always do a scan
         skip_scan = c in ('r', 'e', 'd', 'i')
         if not skip_scan:
-            ls = scan_for_dox_loggers()
+            ls_pp = scan_for_dox_loggers()
 
         # read loggers file
         dlf = {}
         if os.path.exists(FILE_LOGGERS_TOML):
             dlf = toml.load(FILE_LOGGERS_TOML)['loggers']
-
-        # filter by our mac file list
-        lsf = [i.lower() for i in dlf.keys()]
-        ls = [i for i in ls if i.address().lower() in lsf]
 
         # build menu
         bn = os.path.basename(FILE_LOGGERS_TOML)
@@ -191,25 +170,25 @@ def menu():
             'q': 'quit'
         }
 
-        # display options for user to choose from
-        _p('Select an option:')
+        # display menu options for user to choose from
+        _p('\nSelect an option...')
         for k, v in m.items():
             if not k.isnumeric():
                 _p(f'\t{k}) {v}')
 
         # display list of deployable DOX loggers
-        if ls:
-            for i, per in enumerate(ls):
+        ls_file_macs = [m.lower() for m in dlf.values()]
+        ls_pp = [p for p in ls_pp if p.address().lower() in ls_file_macs ]
+        if ls_pp:
+            _p('\n... or deploy one of the Dissolved Oxygen loggers detected nearby:')
+            for i, per in enumerate(ls_pp):
                 sn = get_sn_in_file_from_mac(dlf, per.address())
-                if sn:
-                    _p(f'\t{i}) deploy {sn}')
-                else:
-                    _p(f'\t{i}) deploy {per.address()}')
+                _p(f'\t{i}) deploy {sn}')
                 # add to menu dictionary
                 m[str(i)] = per.address()
 
         # grab user choice
-        c = input('-> ')
+        c = input('\n-> ')
         if c not in m.keys():
             continue
         if c == 'q':
@@ -249,18 +228,27 @@ def menu():
             continue
 
         # deploy logger
-        my_p = ls[int(c)]
+        my_p = ls_pp[int(c)]
         try:
-            _deploy_one_dox_logger(my_p)
-            _p('\nwent OK!')
+            sn = get_sn_in_file_from_mac(dlf, my_p.address())
+            _deploy_one_dox_logger(my_p, sn)
+            _p(f'\ndeployment of DOX logger {sn} went OK!')
         except (Exception,) as ex:
             _p(f'\nerror: {ex}')
+
+        try:
             my_disconnect(my_p)
+        except (Exception,) as ex:
+            _p(f'\nerror disconnecting: {ex}')
+
         _p('\npress ENTER to go back to menu')
         input()
 
 
 if __name__ == '__main__':
+    if len(sys.argv) == 2:
+        # online mode
+        get_remote_loggers_file()
     menu()
     _p('quitting main_DOX')
     time.sleep(1)
