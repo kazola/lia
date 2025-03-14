@@ -2,6 +2,7 @@
 *.py[cod]
 *$py.class
 *.spec
+gen/
 
 
 # IDE
