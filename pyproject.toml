@@ -40,7 +40,9 @@
 py-modules = []
 
 [project.scripts]
+# module.file:function
 main_dox = "lia.main_dox:main"
+main_tdo = "lia.main_tdo:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

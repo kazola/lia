@@ -33,7 +33,7 @@ from lia.common import (
     FILE_LOGGERS_TOML,
     open_text_editor,
     scan_for_tdo_loggers,
-    get_sn_in_file_from_mac, get_remote_loggers_file
+    get_sn_in_file_from_mac, get_remote_loggers_file, check_sn_format
 )
 from lia.scf import prf_d
 
@@ -154,20 +154,20 @@ def menu():
             ls_pp = scan_for_tdo_loggers()
 
         # read loggers file
-        dlf = {}
+        d_lf = {}
         if os.path.exists(FILE_LOGGERS_TOML):
-            dlf = toml.load(FILE_LOGGERS_TOML)['loggers']
+            d_lf = toml.load(FILE_LOGGERS_TOML)['loggers']
+        bn = os.path.basename(FILE_LOGGERS_TOML)
 
         # build menu
-        bn = os.path.basename(FILE_LOGGERS_TOML)
         global prf_i
-        if len(dlf) == 0:
-            _p(f'warning: you have 0 files on your file {bn}')
+        if len(d_lf) == 0:
+            _p(f'* Warning: you file {bn} contains 0 loggers')
         m = {
             's': f'scan again',
             'p': f'set profiler, now is {prf_d[prf_i][0]}',
             'r': f'set run flag, now is {g_app_cfg["rerun"]}',
-            'e': f'edit file {bn}, now it has {len(dlf)} loggers',
+            'e': f'edit file {bn}, now it has {len(d_lf)} loggers',
             'q': 'quit'
         }
 
@@ -178,13 +178,13 @@ def menu():
                 _p(f'\t{k}) {v}')
 
         # display list of deployable TDO loggers
-        ls_file_macs = [m.lower() for m in dlf.values()]
+        ls_file_macs = [m.lower() for m in d_lf.values()]
         ls_pp = [p for p in ls_pp if p.address().lower() in ls_file_macs ]
         if ls_pp:
             _p('\n... or deploy one of the TDO loggers detected nearby:')
             for i, per in enumerate(ls_pp):
-                sn = get_sn_in_file_from_mac(dlf, per.address())
-                _p(f'\t{i}) deploy {sn}')
+                sn_or_mac = get_sn_in_file_from_mac(d_lf, per.address())
+                _p(f'\t{i}) deploy {sn_or_mac}')
                 # add to menu dictionary
                 m[str(i)] = per.address()
 
@@ -192,30 +192,43 @@ def menu():
         c = input('\n-> ')
         if c not in m.keys():
             continue
+
         if c == 'q':
             break
+
         if c == 'p':
             prf_i = (prf_i + 1) % len(prf_d)
             continue
+
         if c == 'r':
             g_app_cfg['rerun'] = not g_app_cfg['rerun']
             continue
+
         if c == 's':
             # just go at it again
             continue
+
         if c == 'e':
             create_app_data_folder_and_file()
             open_text_editor()
             continue
+
         if not c.isnumeric():
             continue
 
-        # deploy logger
+        # ----------------------------------------------------
+        # deploy TDO logger indicated by number input by user
+        # ----------------------------------------------------
+
         my_p = ls_pp[int(c)]
         try:
-            sn = get_sn_in_file_from_mac(dlf, my_p.address())
-            _deploy_one_tdo_logger(my_p, sn)
-            _p(f'\ndeployment of TDO logger {sn} went OK!')
+            mac = my_p.address()
+            sn = get_sn_in_file_from_mac(d_lf, mac)
+            if check_sn_format(sn):
+                _deploy_one_tdo_logger(my_p, sn)
+                _p(f'\ndeployment of TDO logger {sn} went OK!')
+            else:
+                _p(f'\nerror: bad SN ({sn}) for mac {mac}')
         except (Exception,) as ex:
             _p(f'\nerror: {ex}')
 
@@ -228,10 +241,15 @@ def menu():
         input()
 
 
-if __name__ == '__main__':
+def main():
     if len(sys.argv) == 2:
         # online mode
         get_remote_loggers_file()
+
     menu()
-    _p('quitting main_TDO')
+    _p('quitting menu main_TDO')
     time.sleep(1)
+
+
+if __name__ == '__main__':
+    main()

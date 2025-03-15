@@ -232,9 +232,10 @@ def menu():
             # letter options end here, it should be anumber by now
             continue
 
-        # ------------------------------------------------
-        # deploy logger indicated by number input by user
-        # ------------------------------------------------
+        # ----------------------------------------------------
+        # deploy DOX logger indicated by number input by user
+        # ----------------------------------------------------
+
         my_p = ls_pp[int(c)]
         try:
             mac = my_p.address()
