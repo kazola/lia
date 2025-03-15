@@ -27,7 +27,7 @@ from lsb.li import (
     UUID_T
 )
 import toml
-from liw.common import (
+from lia.common import (
     clear_screen,
     create_app_data_folder_and_file,
     FILE_LOGGERS_TOML,
@@ -35,7 +35,7 @@ from liw.common import (
     scan_for_tdo_loggers,
     get_sn_in_file_from_mac, get_remote_loggers_file
 )
-from liw.scf import prf_d
+from lia.scf import prf_d
 
 
 prf_i = 0

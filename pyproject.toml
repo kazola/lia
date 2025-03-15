@@ -4,8 +4,8 @@
 
 
 [project]
-    name = "liw"
-    description = "My LIW library"
+    name = "lia"
+    description = "Small scripts to set up a logger on different platforms"
     readme = "README.md"
     license = { text = "MIT" }
     version = "0.1.0"
@@ -13,7 +13,7 @@
     authors = [
       {name = "LI", email = "joaquim@lowellinstruments.com"}
     ]
-    keywords = ["liw"]
+    keywords = ["lia"]
     classifiers = [
         "Development Status :: 5 - Production/Stable",
         "Natural Language :: English",
@@ -40,7 +40,7 @@
 py-modules = []
 
 [project.scripts]
-main_dox = "liw.main_dox:main"
+main_dox = "lia.main_dox:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

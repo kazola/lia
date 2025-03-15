@@ -1,10 +1,10 @@
-# LIW
+# LIA
 
-Logger Instruments on Windows 
+Logger Instruments for all platforms 
 
 ## Description
 
-Tools such as ``main_tdo`` now can run on MSWindows and MacOS.
+Tools such as ``main_tdo`` now can run on all platforms.
 
 ## License
 

@@ -24,14 +24,14 @@ from lsb.li import (
     UUID_T
 )
 import toml
-from liw.common import (
+from lia.common import (
     clear_screen,
     create_app_data_folder_and_file,
     FILE_LOGGERS_TOML,
     open_text_editor,
     scan_for_dox_loggers,
     get_sn_in_file_from_mac,
-    get_remote_loggers_file
+    get_remote_loggers_file, check_sn_format
 )
 
 
@@ -61,11 +61,7 @@ def _deploy_one_dox_logger(p, sn):
 
     mac = p.address()
 
-    if not sn.startswith('2') or sn.startswith('3'):
-        _p(f'error: {mac} has bad SN {sn}')
-        input()
-
-    _p(f'\ndeploying DOX logger {sn} mac {mac}')
+    _p(f'\nDeploying DOX logger {sn} mac {mac}')
 
     if not connect_mac(p, mac):
         _e('connecting')
@@ -151,19 +147,21 @@ def menu():
         if not skip_scan:
             ls_pp = scan_for_dox_loggers()
 
-        # read loggers file
-        dlf = {}
+        # read loggers file into a dictionary
+        d_lf = {}
         if os.path.exists(FILE_LOGGERS_TOML):
-            dlf = toml.load(FILE_LOGGERS_TOML)['loggers']
+            d_lf = toml.load(FILE_LOGGERS_TOML)['loggers']
+
+        # analyze loggers file and get basename
+        bn = os.path.basename(FILE_LOGGERS_TOML)
+        if len(d_lf) == 0:
+            _p(f'* Warning: your file {bn} contains 0 loggers')
 
         # build menu
-        bn = os.path.basename(FILE_LOGGERS_TOML)
-        if len(dlf) == 0:
-            _p(f'warning: you have 0 files on your file {bn}')
         m = {
             's': f'scan again',
             'r': f'set run flag, now is {g_app_cfg["rerun"]}',
-            'e': f'edit file {bn}, now it has {len(dlf)} loggers',
+            'e': f'edit file {bn}, now it has {len(d_lf)} loggers',
             'd': f'set deployment name, now {g_app_cfg["DFN"]}',
             'i': f'set DO interval, now {g_app_cfg["DRI"]}',
             'q': 'quit'
@@ -176,13 +174,13 @@ def menu():
                 _p(f'\t{k}) {v}')
 
         # display list of deployable DOX loggers
-        ls_file_macs = [m.lower() for m in dlf.values()]
+        ls_file_macs = [m.lower() for m in d_lf.values()]
         ls_pp = [p for p in ls_pp if p.address().lower() in ls_file_macs ]
         if ls_pp:
             _p('\n... or deploy one of the Dissolved Oxygen loggers detected nearby:')
             for i, per in enumerate(ls_pp):
-                sn = get_sn_in_file_from_mac(dlf, per.address())
-                _p(f'\t{i}) deploy {sn}')
+                sn_or_mac = get_sn_in_file_from_mac(d_lf, per.address())
+                _p(f'\t{i}) deploy {sn_or_mac}')
                 # add to menu dictionary
                 m[str(i)] = per.address()
 
@@ -190,14 +188,18 @@ def menu():
         c = input('\n-> ')
         if c not in m.keys():
             continue
+
         if c == 'q':
             break
+
         if c == 'r':
             g_app_cfg['rerun'] = not g_app_cfg['rerun']
             continue
+
         if c == 's':
-            # just go at it again
+            # just return to menu and will BLE scan again
             continue
+
         if c == "d":
             i = str(input("\t\t enter new deployment name -> "))
             if len(i) != 3:
@@ -206,6 +208,7 @@ def menu():
                 continue
             g_app_cfg['DFN'] = i
             continue
+
         if c == "i":
             try:
                 i = int(input("\t\t enter new interval -> "))
@@ -220,19 +223,28 @@ def menu():
                 continue
             g_app_cfg['DRI'] = i
             continue
+
         if c == 'e':
             open_text_editor()
             continue
+
         if not c.isnumeric():
+            # letter options end here, it should be anumber by now
             continue
 
-        # deploy logger
+        # ------------------------------------------------
+        # deploy logger indicated by number input by user
+        # ------------------------------------------------
         my_p = ls_pp[int(c)]
         try:
-            sn = get_sn_in_file_from_mac(dlf, my_p.address())
-            _deploy_one_dox_logger(my_p, sn)
-            _p(f'\ndeployment of DOX logger {sn} went OK!')
-        except (Exception,) as ex:
+            mac = my_p.address()
+            sn = get_sn_in_file_from_mac(d_lf, mac)
+            if check_sn_format(sn):
+                _deploy_one_dox_logger(my_p, sn)
+                _p(f'\ndeployment of DOX logger {sn} went OK!')
+            else:
+                _p(f'\nerror: bad SN ({sn}) for mac {mac}')
+        except (Exception, ) as ex:
             _p(f'\nerror: {ex}')
 
         try:
@@ -248,8 +260,9 @@ def main():
     if len(sys.argv) == 2:
         # online mode
         get_remote_loggers_file()
+
     menu()
-    _p('quitting main_DOX')
+    _p('quitting menu main_DOX')
     time.sleep(1)
 
 
