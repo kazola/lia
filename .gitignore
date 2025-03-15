@@ -2,7 +2,7 @@
 *.py[cod]
 *$py.class
 *.spec
-gen/
+pyinstaller_out/gen/
 
 
 # IDE
@@ -14,7 +14,7 @@ gen/
 
 __pycache__/
 .venv/
-_pyinstaller/
+pyinstaller_out/
 
 
 # Distribution / packaging
