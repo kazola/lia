@@ -5,6 +5,7 @@ import subprocess as sp
 import sys
 from lsb.connect import get_adapters
 from rich.console import Console
+from rich import print
 
 
 PLATFORM = platform.system()
@@ -35,7 +36,7 @@ def scan_for_dox_loggers(t_ms=TIMEOUT_SCAN_MS):
     print('\n')
     t_s = int(t_ms / 1000)
     s = f'Detecting Dissolved Oxygen loggers nearby for {t_s} seconds...'
-    with console.status(s, spinner='aesthetic', speed=.2):
+    with console.status(s, spinner='aesthetic', speed=1, spinner_style="cyan"):
         ad.scan_for(t_ms)
     ls_pp = ad.scan_get_results()
     ls_pp = [p for p in ls_pp if p.identifier() in ('DO-1', 'DO-2')]
@@ -88,3 +89,7 @@ def get_remote_loggers_file():
 def check_sn_format(sn):
     return len(sn) == 7 and (
             sn.startswith('2') or sn.startswith('3'))
+
+
+def print_menu_option(op, s):
+    print(f"\t{op}[yellow4])[/yellow4] {s}")

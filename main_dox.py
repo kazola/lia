@@ -34,7 +34,7 @@ from lia.common import (
     scan_for_dox_loggers,
     get_sn_in_file_from_mac,
     get_remote_loggers_file,
-    check_sn_format
+    check_sn_format, print_menu_option
 )
 from rich.console import Console
 
@@ -161,17 +161,17 @@ def menu():
         bn = os.path.basename(FILE_LOGGERS_TOML)
         if len(d_lf) == 0:
             console.print(
-                f'* Warning: your file {bn} contains 0 loggers',
+                f'* Warning: file {bn} contains 0 loggers',
                 style='yellow'
             )
 
         # build menu
         m = {
             's': f'scan again',
-            'r': f'set run flag, now is {g_app_cfg["rerun"]}',
-            'e': f'edit file {bn}, now it has {len(d_lf)} loggers',
-            'd': f'set deployment name, now {g_app_cfg["DFN"]}',
-            'i': f'set DO interval, now {g_app_cfg["DRI"]}',
+            'r': f'set run flag ({g_app_cfg["rerun"]})',
+            'e': f'edit file {bn} ({len(d_lf)})',
+            'd': f'set deployment name ({g_app_cfg["DFN"]})',
+            'i': f'set DO interval ({g_app_cfg["DRI"]})',
             'q': 'quit'
         }
 
@@ -179,7 +179,7 @@ def menu():
         _p('\nSelect an option...')
         for k, v in m.items():
             if not k.isnumeric():
-                _p(f'\t{k}) {v}')
+                print_menu_option(k, v)
 
         # display list of deployable DOX loggers
         ls_file_macs = [m.lower() for m in d_lf.values()]
