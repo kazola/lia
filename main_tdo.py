@@ -172,9 +172,9 @@ def menu():
         global prf_i
         m = {
             's': f'scan again',
-            'p': f'set profiler, now is {prf_d[prf_i][0]}',
-            'r': f'set run flag, now is {g_app_cfg["rerun"]}',
-            'e': f'edit file {bn}, now it has {len(d_lf)} loggers',
+            'p': f'set profiler ({prf_d[prf_i][0]})',
+            'r': f'set run flag ({g_app_cfg["rerun"]})',
+            'e': f'edit file {bn} ({len(d_lf)})',
             'q': 'quit'
         }
 
