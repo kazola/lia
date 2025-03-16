@@ -182,7 +182,7 @@ def menu():
         _p('\nSelect an option...')
         for k, v in m.items():
             if not k.isnumeric():
-                print_menu_option(f'\t{k}) {v}')
+                print_menu_option(k, v)
 
         # display list of deployable TDO loggers
         ls_file_macs = [m.lower() for m in d_lf.values()]
@@ -191,7 +191,7 @@ def menu():
             _p('\n... or deploy one of the TDO loggers detected nearby:')
             for i, per in enumerate(ls_pp):
                 sn_or_mac = get_sn_in_file_from_mac(d_lf, per.address())
-                print_menu_option(f'\t{i}) deploy {sn_or_mac}')
+                print_menu_option(i, f'deploy {sn_or_mac}')
                 # add to menu dictionary
                 m[str(i)] = per.address()
 
