@@ -37,7 +37,7 @@ from lia.common import (
     scan_for_tdo_loggers,
     get_sn_in_file_from_mac,
     get_remote_loggers_file,
-    check_sn_format
+    check_sn_format, print_menu_option
 )
 from lia.scf import prf_d
 from rich.console import Console
@@ -182,7 +182,7 @@ def menu():
         _p('\nSelect an option...')
         for k, v in m.items():
             if not k.isnumeric():
-                _p(f'\t{k}) {v}')
+                print_menu_option(f'\t{k}) {v}')
 
         # display list of deployable TDO loggers
         ls_file_macs = [m.lower() for m in d_lf.values()]
@@ -191,7 +191,7 @@ def menu():
             _p('\n... or deploy one of the TDO loggers detected nearby:')
             for i, per in enumerate(ls_pp):
                 sn_or_mac = get_sn_in_file_from_mac(d_lf, per.address())
-                _p(f'\t{i}) deploy {sn_or_mac}')
+                print_menu_option(f'\t{i}) deploy {sn_or_mac}')
                 # add to menu dictionary
                 m[str(i)] = per.address()
 
