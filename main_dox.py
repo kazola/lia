@@ -1,6 +1,8 @@
 import os.path
 import sys
 import time
+
+import setproctitle
 from lsb.cmd import (
     get_rx,
     cmd_gfv,
@@ -31,10 +33,13 @@ from lia.common import (
     open_text_editor,
     scan_for_dox_loggers,
     get_sn_in_file_from_mac,
-    get_remote_loggers_file, check_sn_format
+    get_remote_loggers_file,
+    check_sn_format
 )
+from rich.console import Console
 
 
+console = Console()
 BAT_FACTOR_DOX = 0.4545
 g_app_cfg = {
     'rerun': False,
@@ -155,7 +160,10 @@ def menu():
         # analyze loggers file and get basename
         bn = os.path.basename(FILE_LOGGERS_TOML)
         if len(d_lf) == 0:
-            _p(f'* Warning: your file {bn} contains 0 loggers')
+            console.print(
+                f'* Warning: your file {bn} contains 0 loggers',
+                style='yellow'
+            )
 
         # build menu
         m = {
@@ -263,10 +271,9 @@ def main():
         get_remote_loggers_file()
 
     menu()
-    _p('quitting menu main_DOX')
-    time.sleep(1)
 
 
 if __name__ == '__main__':
+    setproctitle.setproctitle('main_dox')
     main()
 

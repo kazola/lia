@@ -30,7 +30,8 @@
         "lsb@git+https://github.com/LowellInstruments/lsb.git",
         "simplepyble~=0.9.0",
         "setproctitle",
-        "toml"
+        "toml",
+        "rich"
     ]
 
 [project.urls]

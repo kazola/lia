@@ -4,6 +4,7 @@ import platform
 import subprocess as sp
 import sys
 from lsb.connect import get_adapters
+from rich.console import Console
 
 
 PLATFORM = platform.system()
@@ -18,17 +19,24 @@ def scan_for_tdo_loggers(t_ms=TIMEOUT_SCAN_MS):
     info = 'TDO'
     assert len(info) == 3
     t_s = int(t_ms / 1000)
-    print(f'\nDetecting {info} loggers nearby for {t_s} seconds...')
-    ad.scan_for(t_ms)
+    print('\n')
+    s = f'Detecting {info} loggers nearby for {t_s} seconds...'
+    with console.status(s, spinner='aesthetic', speed=.2):
+        ad.scan_for(t_ms)
     ls_pp = ad.scan_get_results()
     ls_pp = [p for p in ls_pp if p.identifier() == info]
     return ls_pp
 
 
+console = Console()
+
+
 def scan_for_dox_loggers(t_ms=TIMEOUT_SCAN_MS):
+    print('\n')
     t_s = int(t_ms / 1000)
-    print(f'\nDetecting Dissolved Oxygen loggers nearby for {t_s} seconds...')
-    ad.scan_for(t_ms)
+    s = f'Detecting Dissolved Oxygen loggers nearby for {t_s} seconds...'
+    with console.status(s, spinner='aesthetic', speed=.2):
+        ad.scan_for(t_ms)
     ls_pp = ad.scan_get_results()
     ls_pp = [p for p in ls_pp if p.identifier() in ('DO-1', 'DO-2')]
     return ls_pp

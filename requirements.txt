@@ -4,3 +4,4 @@ setproctitle
 pyinstaller
 toml
 setuptools
+rich

@@ -1,6 +1,8 @@
 import os.path
 import sys
 import time
+
+import setproctitle
 from lsb.cmd import (
     get_rx,
     cmd_gfv,
@@ -33,11 +35,15 @@ from lia.common import (
     FILE_LOGGERS_TOML,
     open_text_editor,
     scan_for_tdo_loggers,
-    get_sn_in_file_from_mac, get_remote_loggers_file, check_sn_format
+    get_sn_in_file_from_mac,
+    get_remote_loggers_file,
+    check_sn_format
 )
 from lia.scf import prf_d
+from rich.console import Console
 
 
+console = Console()
 prf_i = 0
 BAT_FACTOR_TDO = 0.5454
 g_app_cfg = {
@@ -62,10 +68,6 @@ def _pt(s):
 def _deploy_one_tdo_logger(p, sn):
 
     mac = p.address()
-
-    if not sn.startswith('2') or sn.startswith('3'):
-        _p(f'error: {mac} has bad SN {sn}')
-        input()
 
     _p(f'\ndeploying TDO logger {sn} mac {mac}')
 
@@ -159,10 +161,15 @@ def menu():
             d_lf = toml.load(FILE_LOGGERS_TOML)['loggers']
         bn = os.path.basename(FILE_LOGGERS_TOML)
 
+        # analyze loggers file and get basename
+        if len(d_lf) == 0:
+            console.print(
+                f'* Warning: your file {bn} contains 0 loggers',
+                style='yellow'
+            )
+
         # build menu
         global prf_i
-        if len(d_lf) == 0:
-            _p(f'* Warning: you file {bn} contains 0 loggers')
         m = {
             's': f'scan again',
             'p': f'set profiler, now is {prf_d[prf_i][0]}',
@@ -247,9 +254,8 @@ def main():
         get_remote_loggers_file()
 
     menu()
-    _p('quitting menu main_TDO')
-    time.sleep(1)
 
 
 if __name__ == '__main__':
+    setproctitle.setproctitle('main_tdo')
     main()
