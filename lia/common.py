@@ -22,7 +22,7 @@ def scan_for_tdo_loggers(t_ms=TIMEOUT_SCAN_MS):
     t_s = int(t_ms / 1000)
     print('\n')
     s = f'Detecting {info} loggers nearby for {t_s} seconds...'
-    with console.status(s, spinner='aesthetic', speed=.2):
+    with console.status(s, spinner='aesthetic', speed=.2, spinner_style="cyan"):
         ad.scan_for(t_ms)
     ls_pp = ad.scan_get_results()
     ls_pp = [p for p in ls_pp if p.identifier() == info]
@@ -36,7 +36,7 @@ def scan_for_dox_loggers(t_ms=TIMEOUT_SCAN_MS):
     print('\n')
     t_s = int(t_ms / 1000)
     s = f'Detecting Dissolved Oxygen loggers nearby for {t_s} seconds...'
-    with console.status(s, spinner='aesthetic', speed=1, spinner_style="cyan"):
+    with console.status(s, spinner='aesthetic', speed=.2, spinner_style="cyan"):
         ad.scan_for(t_ms)
     ls_pp = ad.scan_get_results()
     ls_pp = [p for p in ls_pp if p.identifier() in ('DO-1', 'DO-2')]
