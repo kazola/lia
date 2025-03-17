@@ -1,3 +1,4 @@
+import json
 import os.path
 import setproctitle
 from lsb.cmd import (
@@ -7,7 +8,9 @@ from lsb.cmd import (
     cb_rx_noti,
     cmd_dir,
     cmd_dwg,
-    cmd_dwl
+    cmd_dwl,
+    cmd_mts,
+    cmd_cfg
 )
 from lsb.connect import (
     connect_mac,
@@ -24,13 +27,13 @@ from lia.common import (
     FILE_LOGGERS_TOML,
     open_text_editor,
     get_sn_in_file_from_mac,
-    check_sn_format,
     print_menu_option,
     file_dl_path,
     scan_for_all_loggers,
     filter_by_loggers_file,
     scan_for_dox_loggers,
-    scan_for_tdo_loggers
+    scan_for_tdo_loggers,
+    print_success
 )
 from rich.console import Console
 
@@ -57,11 +60,11 @@ def _pt(s):
     return _p(s, t=1)
 
 
-def _download_one_logger(p, sn):
+def _download_one_logger(p):
 
     mac = p.address()
 
-    _p(f'\ndeploying {g_info} logger {sn} mac {mac}')
+    _p(f'\nDownloading {g_info} logger {mac}')
 
     if not connect_mac(p, mac):
         _e('connecting')
@@ -73,26 +76,49 @@ def _download_one_logger(p, sn):
     _e('command stop with string')
     _pt('stop OK')
 
+    # debug, create dummy files
+    # _pt('creating dummy file')
+    # cmd_mts(p)
+    # _e('command MTS')
+
     # get list of logger files
     rv = cmd_dir(p)
     _e('command DIR')
     ls = rv['ls']
+    if not ls:
+        _pt('no files to download from this logger')
+    else:
+        _pt('listing files in this logger:')
+        for name, size in ls.items():
+            _p(f'- {name}, {size} bytes', t=2)
+
+    # download every file
+    d_cmd_cfg = {}
     for name, size in ls.items():
-        _p(f'downloading {name}, {size} bytes')
+        _pt(f'downloading {name}, {size} bytes...')
         cmd_dwg(p, name)
         _e(f'command DWG file {name}')
-        bb = cmd_dwl(p, name, size)
+        bb = cmd_dwl(p, size)
         _e(f'command DWL file {name}')
-
-        # todo ---> do the progress bar
-        with open(file_dl_path(name), 'wb') as f:
+        dl_path = file_dl_path(mac, name)
+        with open(dl_path, 'wb') as f:
             f.write(bb)
-        _p(f'file {name} download OK!')
+        _pt(f'file {name} download OK')
+        if name == 'MAT.cfg':
+            with open(dl_path, 'r') as j_f:
+                d_cmd_cfg = json.load(j_f)
 
     # reset logger file-system
     cmd_frm(p)
     _e('command format')
     _pt('format OK')
+
+    # restore configuration file
+    if d_cmd_cfg:
+        cmd_cfg(p, d_cmd_cfg)
+        _e('command CFG')
+        _pt('CFG OK')
+
 
     my_disconnect(p)
     _pt('disconnected')
@@ -148,13 +174,17 @@ def menu():
         # try to re-order by type
         ls_pp.sort(key=lambda p: p.identifier())
 
+        # restrict to developer logger when debugging
+        # ls_pp = [p for p in ls_pp if p.address().lower() == "d0:2e:ab:d9:29:48"]
+        ls_pp = [p for p in ls_pp if p.address().lower() == "d0:2e:ab:d9:bc:56"]
+
         # display list of deployable TDO loggers
         if ls_pp:
             _p('\n... or download one of the loggers detected nearby:')
             for i, per in enumerate(ls_pp):
                 sn_or_mac = get_sn_in_file_from_mac(d_lf, per.address())
                 info = per.identifier().replace('-', '')
-                print_menu_option(i, f'download {info} {sn_or_mac}')
+                print_menu_option(i, f'{info} {sn_or_mac}')
                 # add to menu dictionary
                 m[str(i)] = per.address()
 
@@ -194,12 +224,8 @@ def menu():
         try:
             mac = my_p.address()
             g_info = my_p.identifier()
-            sn = get_sn_in_file_from_mac(d_lf, mac)
-            if check_sn_format(sn):
-                _download_one_logger(my_p, sn)
-                _p(f'\ndownload of {g_info} logger {sn} went OK!')
-            else:
-                _p(f'\nerror: bad SN ({sn}) for mac {mac}')
+            _download_one_logger(my_p)
+            print_success(f'\nDownload of {g_info} logger {mac} went OK!')
         except (Exception,) as ex:
             _p(f'\nerror: {ex}')
 

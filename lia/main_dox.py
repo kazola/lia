@@ -250,7 +250,7 @@ def menu():
             sn = get_sn_in_file_from_mac(d_lf, mac)
             if check_sn_format(sn):
                 _deploy_one_dox_logger(my_p, sn)
-                _p(f'\ndeployment of DOX logger {sn} went OK!')
+                _p(f'\nDeployment of DOX logger {sn} went OK!')
             else:
                 _p(f'\nerror: bad SN ({sn}) for mac {mac}')
         except (Exception, ) as ex:

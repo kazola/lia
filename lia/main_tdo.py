@@ -69,7 +69,7 @@ def _deploy_one_tdo_logger(p, sn):
 
     mac = p.address()
 
-    _p(f'\ndeploying TDO logger {sn} mac {mac}')
+    _p(f'\nDeploying TDO logger {sn} mac {mac}')
 
     if not connect_mac(p, mac):
         _e('connecting')
@@ -233,7 +233,7 @@ def menu():
             sn = get_sn_in_file_from_mac(d_lf, mac)
             if check_sn_format(sn):
                 _deploy_one_tdo_logger(my_p, sn)
-                _p(f'\ndeployment of TDO logger {sn} went OK!')
+                _p(f'\nDeployment of TDO logger {sn} went OK!')
             else:
                 _p(f'\nerror: bad SN ({sn}) for mac {mac}')
         except (Exception,) as ex:
@@ -244,7 +244,7 @@ def menu():
         except (Exception,) as ex:
             _p(f'\nerror disconnecting: {ex}')
 
-        _p('\npress ENTER to go back to menu')
+        console.print('\npress ENTER to go back to menu', style='grey')
         input()
 
 

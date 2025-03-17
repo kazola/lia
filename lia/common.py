@@ -17,8 +17,12 @@ TIMEOUT_SCAN_MS = 10000
 ad = get_adapters()[0]
 
 
-def file_dl_path(name):
-    return pathlib.Path.home() / 'Downloads' / 'lia' / name
+def file_dl_path(mac, filename):
+    fol = str(pathlib.Path.home() / 'Downloads' / 'lia' /
+              mac.replace(':', '-'))
+    if not os.path.exists(fol):
+        os.system(f'mkdir {fol}')
+    return pathlib.Path(fol) / filename
 
 
 def _scan(info, t_ms=TIMEOUT_SCAN_MS):
@@ -106,3 +110,7 @@ def check_sn_format(sn):
 
 def print_menu_option(op, s):
     print(f"\t{op}[yellow4])[/yellow4] {s}")
+
+
+def print_success(s):
+    print(f'[green]{s}[/green]')
