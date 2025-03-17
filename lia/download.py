@@ -176,7 +176,6 @@ def menu():
 
         # restrict to developer logger when debugging
         # ls_pp = [p for p in ls_pp if p.address().lower() == "d0:2e:ab:d9:29:48"]
-        ls_pp = [p for p in ls_pp if p.address().lower() == "d0:2e:ab:d9:bc:56"]
 
         # display list of deployable TDO loggers
         if ls_pp:
