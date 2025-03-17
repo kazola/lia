@@ -52,7 +52,7 @@ def filter_by_loggers_file(ls_pp, d_lf):
     # get list of mac from loggers file
     ls_lf = list(d_lf.keys())
     ls_lf = [m.lower() for m in ls_lf]
-    ls_pp = [p for p in ls_pp if p.adress().lower() in ls_lf]
+    ls_pp = [p for p in ls_pp if p.address().lower() in ls_lf]
     return ls_pp
 
 

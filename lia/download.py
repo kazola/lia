@@ -28,7 +28,9 @@ from lia.common import (
     print_menu_option,
     file_dl_path,
     scan_for_all_loggers,
-    filter_by_loggers_file
+    filter_by_loggers_file,
+    scan_for_dox_loggers,
+    scan_for_tdo_loggers
 )
 from rich.console import Console
 
@@ -36,7 +38,8 @@ from rich.console import Console
 console = Console()
 g_info = ''
 g_cfg = {
-    'filter': False
+    'filter': False,
+    'type': 0
 }
 
 
@@ -99,15 +102,22 @@ def menu():
     create_app_data_folder_and_file()
     ls_pp = []
     c = ''
+    global g_info
+    global g_cfg
 
     while 1:
 
         clear_screen()
 
         # we not always do a scan
-        skip_scan = c in ('e', 'f', )
+        skip_scan = c in ('e', )
         if not skip_scan:
-            ls_pp = scan_for_all_loggers()
+            if g_cfg['type'] == 0:
+                ls_pp = scan_for_all_loggers()
+            elif g_cfg['type'] == 1:
+                ls_pp = scan_for_dox_loggers()
+            else:
+                ls_pp = scan_for_tdo_loggers()
 
         # read loggers file
         d_lf = {}
@@ -116,13 +126,14 @@ def menu():
         bn = os.path.basename(FILE_LOGGERS_TOML)
 
         # filter or not filter
-        global g_cfg
         if g_cfg['filter']:
             ls_pp = filter_by_loggers_file(ls_pp, d_lf)
 
         # build menu
+        ty = {0: 'ALL', 1: 'DOX', 2: 'TDO'}
         m = {
-            's': f'scan again for ALL loggers',
+            's': f'scan again',
+            't': f'set type ({ty[g_cfg["type"]]})',
             'f': f'filter by loggers file ({g_cfg["filter"]})',
             'e': f'edit file {bn} ({len(d_lf)})',
             'q': 'quit'
@@ -134,14 +145,15 @@ def menu():
             if not k.isnumeric():
                 print_menu_option(k, v)
 
+        # try to re-order by type
+        ls_pp.sort(key=lambda p: p.identifier())
+
         # display list of deployable TDO loggers
-        ls_file_macs = [m.lower() for m in d_lf.values()]
-        ls_pp = [p for p in ls_pp if p.address().lower() in ls_file_macs ]
         if ls_pp:
             _p('\n... or download one of the loggers detected nearby:')
             for i, per in enumerate(ls_pp):
                 sn_or_mac = get_sn_in_file_from_mac(d_lf, per.address())
-                info = p.identifier().replace('-', '')
+                info = per.identifier().replace('-', '')
                 print_menu_option(i, f'download {info} {sn_or_mac}')
                 # add to menu dictionary
                 m[str(i)] = per.address()
@@ -166,6 +178,9 @@ def menu():
             open_text_editor()
             continue
 
+        if c == 't':
+            g_cfg['type'] = (g_cfg['type'] + 1) % 3
+
         if not c.isnumeric():
             continue
 
@@ -173,7 +188,6 @@ def menu():
         # deploy TDO logger indicated by number input by user
         # ----------------------------------------------------
 
-        global g_info
         g_info = ''
 
         my_p = ls_pp[int(c)]
