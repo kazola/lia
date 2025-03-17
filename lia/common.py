@@ -16,6 +16,10 @@ TIMEOUT_SCAN_MS = 10000
 ad = get_adapters()[0]
 
 
+def file_dl_path(name):
+    return pathlib.Path.home() / 'Downloads' / 'lia' / name
+
+
 def scan_for_tdo_loggers(t_ms=TIMEOUT_SCAN_MS):
     info = 'TDO'
     assert len(info) == 3
