@@ -167,7 +167,7 @@ def menu():
 
         # build menu
         m = {
-            's': f'scan again',
+            's': f'scan again for DOX loggers',
             'r': f'set run flag ({g_app_cfg["rerun"]})',
             'e': f'edit file {bn} ({len(d_lf)})',
             'd': f'set deployment name ({g_app_cfg["DFN"]})',

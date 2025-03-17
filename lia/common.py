@@ -8,6 +8,7 @@ from rich.console import Console
 from rich import print
 
 
+console = Console()
 PLATFORM = platform.system()
 FILE_LOGGERS_TOML = (pathlib.Path.home() /
                      'Downloads' / 'lia' / 'loggers.toml')
@@ -20,30 +21,38 @@ def file_dl_path(name):
     return pathlib.Path.home() / 'Downloads' / 'lia' / name
 
 
-def scan_for_tdo_loggers(t_ms=TIMEOUT_SCAN_MS):
-    info = 'TDO'
-    assert len(info) == 3
+def _scan(info, t_ms=TIMEOUT_SCAN_MS):
+    assert type(info) is tuple
     t_s = int(t_ms / 1000)
     print('\n')
     s = f'Detecting {info} loggers nearby for {t_s} seconds...'
     with console.status(s, spinner='aesthetic', speed=.2, spinner_style="cyan"):
         ad.scan_for(t_ms)
     ls_pp = ad.scan_get_results()
-    ls_pp = [p for p in ls_pp if p.identifier() == info]
+    ls_pp = [p for p in ls_pp if p.identifier() in info]
     return ls_pp
 
 
-console = Console()
+def scan_for_tdo_loggers(t_ms=TIMEOUT_SCAN_MS):
+    info = ('TDO', )
+    return _scan(info, t_ms)
 
 
 def scan_for_dox_loggers(t_ms=TIMEOUT_SCAN_MS):
-    print('\n')
-    t_s = int(t_ms / 1000)
-    s = f'Detecting Dissolved Oxygen loggers nearby for {t_s} seconds...'
-    with console.status(s, spinner='aesthetic', speed=.2, spinner_style="cyan"):
-        ad.scan_for(t_ms)
-    ls_pp = ad.scan_get_results()
-    ls_pp = [p for p in ls_pp if p.identifier() in ('DO-1', 'DO-2')]
+    info = ('DO-1', 'DO-2')
+    return _scan(info, t_ms)
+
+
+def scan_for_all_loggers(t_ms=TIMEOUT_SCAN_MS):
+    info = ('TDO', 'DO-1', 'DO-2')
+    return _scan(info, t_ms)
+
+
+def filter_by_loggers_file(ls_pp, d_lf):
+    # get list of mac from loggers file
+    ls_lf = list(d_lf.keys())
+    ls_lf = [m.lower() for m in ls_lf]
+    ls_pp = [p for p in ls_pp if p.adress().lower() in ls_lf]
     return ls_pp
 
 

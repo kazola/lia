@@ -171,7 +171,7 @@ def menu():
         # build menu
         global prf_i
         m = {
-            's': f'scan again',
+            's': f'scan again for TDO loggers',
             'p': f'set profiler ({prf_d[prf_i][0]})',
             'r': f'set run flag ({g_app_cfg["rerun"]})',
             'e': f'edit file {bn} ({len(d_lf)})',

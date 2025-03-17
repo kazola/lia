@@ -23,17 +23,21 @@ from lia.common import (
     create_app_data_folder_and_file,
     FILE_LOGGERS_TOML,
     open_text_editor,
-    scan_for_tdo_loggers,
     get_sn_in_file_from_mac,
     check_sn_format,
     print_menu_option,
-    file_dl_path
+    file_dl_path,
+    scan_for_all_loggers,
+    filter_by_loggers_file
 )
 from rich.console import Console
 
 
 console = Console()
 g_info = ''
+g_cfg = {
+    'filter': False
+}
 
 
 def _e(e):
@@ -101,9 +105,9 @@ def menu():
         clear_screen()
 
         # we not always do a scan
-        skip_scan = c in ('e', )
+        skip_scan = c in ('e', 'f', )
         if not skip_scan:
-            ls_pp = scan_for_tdo_loggers()
+            ls_pp = scan_for_all_loggers()
 
         # read loggers file
         d_lf = {}
@@ -111,17 +115,15 @@ def menu():
             d_lf = toml.load(FILE_LOGGERS_TOML)['loggers']
         bn = os.path.basename(FILE_LOGGERS_TOML)
 
-        # analyze loggers file and get basename
-        if len(d_lf) == 0:
-            console.print(
-                f'* Warning: your file {bn} contains 0 loggers',
-                style='yellow'
-            )
+        # filter or not filter
+        global g_cfg
+        if g_cfg['filter']:
+            ls_pp = filter_by_loggers_file(ls_pp, d_lf)
 
         # build menu
-        global prf_i
         m = {
-            's': f'scan again',
+            's': f'scan again for ALL loggers',
+            'f': f'filter by loggers file ({g_cfg["filter"]})',
             'e': f'edit file {bn} ({len(d_lf)})',
             'q': 'quit'
         }
@@ -139,7 +141,8 @@ def menu():
             _p('\n... or download one of the loggers detected nearby:')
             for i, per in enumerate(ls_pp):
                 sn_or_mac = get_sn_in_file_from_mac(d_lf, per.address())
-                print_menu_option(i, f'download {sn_or_mac}')
+                info = p.identifier().replace('-', '')
+                print_menu_option(i, f'download {info} {sn_or_mac}')
                 # add to menu dictionary
                 m[str(i)] = per.address()
 
@@ -154,6 +157,9 @@ def menu():
         if c == 's':
             # just go at it again
             continue
+        
+        if c == 'f':
+            g_cfg['filter'] = not g_cfg['filter']
 
         if c == 'e':
             create_app_data_folder_and_file()
