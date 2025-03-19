@@ -126,7 +126,7 @@ def _download_one_logger(p):
 
 def menu():
     create_app_data_folder_and_file()
-    ls_pp = []
+    ls_scan = []
     c = ''
     global g_info
     global g_cfg
@@ -139,11 +139,11 @@ def menu():
         skip_scan = c in ('e', )
         if not skip_scan:
             if g_cfg['type'] == 0:
-                ls_pp = scan_for_all_loggers()
+                ls_scan = scan_for_all_loggers()
             elif g_cfg['type'] == 1:
-                ls_pp = scan_for_dox_loggers()
+                ls_scan = scan_for_dox_loggers()
             else:
-                ls_pp = scan_for_tdo_loggers()
+                ls_scan = scan_for_tdo_loggers()
 
         # read loggers file
         d_lf = {}
@@ -152,8 +152,9 @@ def menu():
         bn = os.path.basename(FILE_LOGGERS_TOML)
 
         # filter or not filter
+        ls_pp = []
         if g_cfg['filter']:
-            ls_pp = filter_by_loggers_file(ls_pp, d_lf)
+            ls_pp = filter_by_loggers_file(ls_scan, d_lf)
 
         # build menu
         ty = {0: 'ALL', 1: 'DOX', 2: 'TDO'}
@@ -162,6 +163,7 @@ def menu():
             't': f'set type ({ty[g_cfg["type"]]})',
             'f': f'filter by loggers file ({g_cfg["filter"]})',
             'e': f'edit file {bn} ({len(d_lf)})',
+            'c': f'create file {bn} dynamically',
             'q': 'quit'
         }
 
@@ -205,6 +207,16 @@ def menu():
         if c == 'e':
             create_app_data_folder_and_file()
             open_text_editor()
+            continue
+
+        if c == 'c':
+            _p('warning: this will overwrite your loggers file, sure?')
+            if input('\n\t-> ') != 'y':
+                continue
+            with open(FILE_LOGGERS_TOML, 'w') as f:
+                f.write('[loggers]\n')
+                for p in ls_scan:
+                    f.write(f'"{p.address()}" = ""\n')
             continue
 
         if c == 't':

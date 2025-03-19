@@ -140,7 +140,7 @@ def _deploy_one_dox_logger(p, sn):
 
 def menu():
     create_app_data_folder_and_file()
-    ls_pp = []
+    ls_scan = []
     c = ''
 
     while 1:
@@ -148,9 +148,9 @@ def menu():
         clear_screen()
 
         # we not always do a scan
-        skip_scan = c in ('r', 'e', 'd', 'i')
+        skip_scan = c in ('r', 'e', 'd', 'i', 'c')
         if not skip_scan:
-            ls_pp = scan_for_dox_loggers()
+            ls_scan = scan_for_dox_loggers()
 
         # read loggers file into a dictionary
         d_lf = {}
@@ -169,9 +169,10 @@ def menu():
         m = {
             's': f'scan again for DOX loggers',
             'r': f'set run flag ({g_app_cfg["rerun"]})',
-            'e': f'edit file {bn} ({len(d_lf)})',
             'd': f'set deployment name ({g_app_cfg["DFN"]})',
             'i': f'set DO interval ({g_app_cfg["DRI"]})',
+            'c': f'create file {bn} dynamically',
+            'e': f'edit file {bn} ({len(d_lf)})',
             'q': 'quit'
         }
 
@@ -183,7 +184,7 @@ def menu():
 
         # display list of deployable DOX loggers
         ls_file_macs = [m.lower() for m in d_lf.values()]
-        ls_pp = [p for p in ls_pp if p.address().lower() in ls_file_macs ]
+        ls_pp = [p for p in ls_scan if p.address().lower() in ls_file_macs ]
         if ls_pp:
             _p('\n... or deploy one of the Dissolved Oxygen loggers detected nearby:')
             for i, per in enumerate(ls_pp):
@@ -234,6 +235,16 @@ def menu():
 
         if c == 'e':
             open_text_editor()
+            continue
+
+        if c == 'c':
+            _p('warning: this will overwrite your loggers file, sure?')
+            if input('\n\t-> ') != 'y':
+                continue
+            with open(FILE_LOGGERS_TOML, 'w') as f:
+                f.write('[loggers]\n')
+                for p in ls_scan:
+                    f.write(f'"{p.address()}" = ""\n')
             continue
 
         if not c.isnumeric():
