@@ -174,7 +174,7 @@ def menu():
                 print_menu_option(k, v)
 
         # try to re-order by type
-        ls_pp.sort(key=lambda p: p.identifier())
+        ls_pp.sort(key=lambda x: x.identifier())
 
         # restrict to developer logger when debugging
         # ls_pp = [p for p in ls_pp if p.address().lower() == "d0:2e:ab:d9:29:48"]
